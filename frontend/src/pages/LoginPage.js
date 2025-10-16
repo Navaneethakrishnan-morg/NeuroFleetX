@@ -64,7 +64,7 @@ const LoginPageNew = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden" style={{backgroundColor: '#0A0F0D'}}>
 
       <div className="relative min-h-screen flex items-center justify-center p-6">
         <div className="max-w-md w-full animate-fade-in-up">
@@ -74,22 +74,22 @@ const LoginPageNew = () => {
             </div>
 
             <div className="text-center mb-8">
-              <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gray-200 border-2 border-gray-300 flex items-center justify-center">
-                <IconComponent size="lg" className="text-black" />
+              <div className="w-20 h-20 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{backgroundColor: 'rgba(18, 33, 27, 0.6)', border: '2px solid rgba(16, 185, 129, 0.4)'}}>
+                <IconComponent size="lg" style={{color: '#00FF9C'}} />
               </div>
-              <h2 className="text-2xl font-bold mb-2 text-black">{config.title}</h2>
-              <p className="text-gray-600 text-sm">Sign in to your account</p>
+              <h2 className="text-2xl font-bold mb-2" style={{color: '#FFFFFF'}}>{config.title}</h2>
+              <p className="text-sm" style={{color: '#E0E0E0'}}>Sign in to your account</p>
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-xl mb-6 animate-fade-in">
+              <div className="px-4 py-3 rounded-xl mb-6 animate-fade-in" style={{backgroundColor: 'rgba(255, 82, 82, 0.15)', border: '1px solid #FF5252', color: '#FF5252'}}>
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold mb-2 text-gray-700">
+                <label className="block text-sm font-semibold mb-2" style={{color: '#E0E0E0'}}>
                   Username
                 </label>
                 <input
@@ -103,7 +103,7 @@ const LoginPageNew = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-gray-700">
+                <label className="block text-sm font-semibold mb-2" style={{color: '#E0E0E0'}}>
                   Password
                 </label>
                 <input
@@ -119,7 +119,8 @@ const LoginPageNew = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 bg-black text-white rounded-xl font-semibold text-lg transition-all duration-300 hover:bg-gray-800 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                style={{background: 'linear-gradient(135deg, #064E3B 0%, #10B981 100%)', color: '#FFFFFF', boxShadow: '0 0 30px rgba(0, 255, 156, 0.4)'}}
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
@@ -130,13 +131,19 @@ const LoginPageNew = () => {
               <div className="flex items-center justify-between text-sm">
                 <button
                   onClick={() => navigate('/portals')}
-                  className="text-gray-600 hover:text-black transition-colors duration-300"
+                  className="transition-colors duration-300"
+                  style={{color: '#E0E0E0'}}
+                  onMouseEnter={(e) => e.currentTarget.style.color = '#00FF9C'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = '#E0E0E0'}
                 >
                   ← Back to Portals
                 </button>
                 <button
                   onClick={() => navigate('/signup')}
-                  className="text-black hover:text-gray-700 font-semibold transition-colors duration-300"
+                  className="font-semibold transition-colors duration-300"
+                  style={{color: '#00FF9C'}}
+                  onMouseEnter={(e) => e.currentTarget.style.color = '#10B981'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = '#00FF9C'}
                 >
                   Sign up
                 </button>

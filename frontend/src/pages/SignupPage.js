@@ -30,11 +30,31 @@ const SignupPageNew = () => {
     setLoading(true);
     
     try {
+      // First signup the user
       await authService.signup(formData);
       setSuccess(true);
-      setTimeout(() => {
-        navigate(`/login/${formData.role.toLowerCase()}`);
-      }, 2000);
+      
+      // Then automatically login with the same credentials
+      try {
+        const loginResponse = await authService.login(formData.username, formData.password);
+        const { token, role: userRole, username, fullName } = loginResponse.data;
+        
+        // Store auth data
+        localStorage.setItem('token', token);
+        localStorage.setItem('role', userRole);
+        localStorage.setItem('username', username);
+        localStorage.setItem('fullName', fullName);
+        
+        // Redirect to appropriate dashboard based on role
+        setTimeout(() => {
+          navigate(`/${userRole.toLowerCase()}/dashboard`);
+        }, 1500);
+      } catch (loginErr) {
+        // If auto-login fails, redirect to login page
+        setTimeout(() => {
+          navigate(`/login/${formData.role.toLowerCase()}`);
+        }, 2000);
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
@@ -43,9 +63,9 @@ const SignupPageNew = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-black flex items-center justify-center p-6">
+    <div className="min-h-screen flex items-center justify-center p-6" style={{backgroundColor: '#0A0F0D'}}>
       <div className="max-w-md w-full">
-        <div className="bg-white backdrop-blur-xl rounded-2xl border-2 border-gray-200 p-8 shadow-lg">
+        <div className="backdrop-blur-xl rounded-2xl p-8" style={{backgroundColor: 'rgba(18, 33, 27, 0.8)', border: '2px solid rgba(16, 185, 129, 0.3)', boxShadow: '0 8px 32px 0 rgba(0, 255, 156, 0.1)'}}>
           {/* Logo */}
           <div className="flex justify-center mb-6">
             <Logo size="medium" />
@@ -53,32 +73,32 @@ const SignupPageNew = () => {
 
           {/* Header */}
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-2">Create Account</h2>
-            <p className="text-gray-600">Join NeuroFleetX Platform</p>
+            <h2 className="text-3xl font-bold mb-2" style={{color: '#FFFFFF'}}>Create Account</h2>
+            <p style={{color: '#E0E0E0'}}>Join NeuroFleetX Platform</p>
           </div>
 
           {/* Messages */}
           {error && (
-            <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg mb-6">
+            <div className="px-4 py-3 rounded-lg mb-6" style={{backgroundColor: 'rgba(255, 82, 82, 0.15)', border: '1px solid #FF5252', color: '#FF5252'}}>
               {error}
             </div>
           )}
 
           {success && (
-            <div className="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg mb-6">
-              Registration successful! Redirecting to login...
+            <div className="px-4 py-3 rounded-lg mb-6" style={{backgroundColor: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10B981', color: '#00FF9C'}}>
+              Registration successful! Redirecting to your dashboard...
             </div>
           )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">
+              <label className="block text-sm font-semibold mb-2" style={{color: '#E0E0E0'}}>
                 Full Name
               </label>
               <input
                 type="text"
-                className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black text-black placeholder-gray-400 transition duration-300"
+                className="input-field"
                 placeholder="Your full name"
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
@@ -87,12 +107,12 @@ const SignupPageNew = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">
+              <label className="block text-sm font-semibold mb-2" style={{color: '#E0E0E0'}}>
                 Username
               </label>
               <input
                 type="text"
-                className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black text-black placeholder-gray-400 transition duration-300"
+                className="input-field"
                 placeholder="Choose a username"
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
@@ -101,12 +121,12 @@ const SignupPageNew = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">
+              <label className="block text-sm font-semibold mb-2" style={{color: '#E0E0E0'}}>
                 Email
               </label>
               <input
                 type="email"
-                className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black text-black placeholder-gray-400 transition duration-300"
+                className="input-field"
                 placeholder="your@email.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -115,12 +135,12 @@ const SignupPageNew = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">
+              <label className="block text-sm font-semibold mb-2" style={{color: '#E0E0E0'}}>
                 Phone (Optional)
               </label>
               <input
                 type="tel"
-                className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black text-black placeholder-gray-400 transition duration-300"
+                className="input-field"
                 placeholder="Your phone number"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -128,12 +148,12 @@ const SignupPageNew = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">
+              <label className="block text-sm font-semibold mb-2" style={{color: '#E0E0E0'}}>
                 Password
               </label>
               <input
                 type="password"
-                className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black text-black placeholder-gray-400 transition duration-300"
+                className="input-field"
                 placeholder="Create a strong password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -142,7 +162,7 @@ const SignupPageNew = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">
+              <label className="block text-sm font-semibold mb-2" style={{color: '#E0E0E0'}}>
                 Select Your Role
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -151,11 +171,11 @@ const SignupPageNew = () => {
                     key={role.value}
                     type="button"
                     onClick={() => setFormData({ ...formData, role: role.value })}
-                    className={`p-3 rounded-lg border-2 transition duration-300 ${
-                      formData.role === role.value
-                        ? 'bg-black text-white border-black'
-                        : 'bg-white border-gray-300 hover:border-black text-black'
-                    }`}
+                    className={`p-3 rounded-lg border-2 transition duration-300`}
+                    style={formData.role === role.value
+                      ? {background: 'linear-gradient(135deg, #064E3B 0%, #10B981 100%)', color: '#FFFFFF', borderColor: '#00FF9C', boxShadow: '0 0 20px rgba(0, 255, 156, 0.3)'}
+                      : {backgroundColor: 'rgba(18, 33, 27, 0.6)', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#E0E0E0'}
+                    }
                   >
                     <div className="text-2xl mb-1">{role.icon}</div>
                     <div className="text-sm font-semibold">{role.label}</div>
@@ -167,7 +187,8 @@ const SignupPageNew = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-black text-white rounded-lg font-semibold text-lg hover:bg-gray-800 hover:shadow-lg transition duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full py-4 rounded-lg font-semibold text-lg transition duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              style={{background: 'linear-gradient(135deg, #064E3B 0%, #10B981 100%)', color: '#FFFFFF', boxShadow: '0 0 30px rgba(0, 255, 156, 0.4)'}}
             >
               {loading ? 'Creating Account...' : 'Sign Up'}
             </button>
@@ -177,14 +198,20 @@ const SignupPageNew = () => {
           <div className="mt-6 text-center space-y-3">
             <button
               onClick={() => navigate('/portals')}
-              className="text-gray-600 hover:text-black text-sm transition duration-300"
+              className="text-sm transition duration-300"
+              style={{color: '#E0E0E0'}}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#00FF9C'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#E0E0E0'}
             >
               ← Back to Portals
             </button>
             <div>
               <button
                 onClick={() => navigate(`/login/${formData.role.toLowerCase()}`)}
-                className="text-black hover:text-gray-700 text-sm font-semibold transition duration-300"
+                className="text-sm font-semibold transition duration-300"
+                style={{color: '#00FF9C'}}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#10B981'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#00FF9C'}
               >
                 Already have an account? Sign in
               </button>

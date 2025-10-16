@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LandingPage from './pages/LandingPage';
+import WelcomePage from './pages/WelcomePage';
 import PortalSelectionPage from './pages/PortalSelectionPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
@@ -14,7 +14,8 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<WelcomePage />} />
+          <Route path="/portal-selection" element={<PortalSelectionPage />} />
           <Route path="/portals" element={<PortalSelectionPage />} />
           <Route path="/login/:role" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
