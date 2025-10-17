@@ -25,6 +25,11 @@ public class VehicleController {
         return ResponseEntity.ok(vehicleService.getAllVehicles());
     }
 
+    @GetMapping("/customer/vehicles")
+    public ResponseEntity<List<Vehicle>> getAvailableVehiclesForCustomer() {
+        return ResponseEntity.ok(vehicleService.getAllVehicles());
+    }
+
     @GetMapping("/vehicles/{id}")
     public ResponseEntity<Vehicle> getVehicleById(@PathVariable Long id) {
         return ResponseEntity.ok(vehicleService.getVehicleById(id));

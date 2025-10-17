@@ -4,7 +4,7 @@ import { authService } from '../services/api';
 import Logo from '../components/Logo';
 import { DashboardIcon, VehicleIcon, RouteIcon, UserIcon } from '../components/Icons';
 
-const LoginPageNew = () => {
+const LoginPage = () => {
   const navigate = useNavigate();
   const { role } = useParams();
   const [formData, setFormData] = useState({ username: '', password: '' });
@@ -156,4 +156,4 @@ const LoginPageNew = () => {
   );
 };
 
-export default LoginPageNew;
+export default LoginPage;

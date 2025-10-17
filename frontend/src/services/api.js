@@ -31,6 +31,7 @@ export const authService = {
 
 export const vehicleService = {
   getAll: () => api.get('/admin/vehicles'),
+  getAllForCustomer: () => api.get('/customer/vehicles'),
   getById: (id) => api.get(`/vehicles/${id}`),
   create: (vehicle) => api.post('/admin/vehicles', vehicle),
   update: (id, vehicle) => api.put(`/admin/vehicles/${id}`, vehicle),

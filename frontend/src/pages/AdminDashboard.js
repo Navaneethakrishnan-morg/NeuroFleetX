@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { vehicleService, bookingService, maintenanceService } from '../services/api';
 import Logo from '../components/Logo';
+import VehicleModal from '../components/VehicleModal';
 import { 
   VehicleIcon, 
   RouteIcon, 
@@ -11,7 +12,10 @@ import {
   LogoutIcon,
   AlertIcon,
   TrendingUpIcon,
-  ChartIcon
+  ChartIcon,
+  BatteryIcon,
+  LocationIcon,
+  FilterIcon
 } from '../components/Icons';
 
 const AdminDashboard = () => {
@@ -25,6 +29,10 @@ const AdminDashboard = () => {
     revenue: 0,
     maintenanceDue: 0,
   });
+  const [isVehicleModalOpen, setIsVehicleModalOpen] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [filterStatus, setFilterStatus] = useState('ALL');
+  const [activeTab, setActiveTab] = useState('overview');
 
   const fullName = localStorage.getItem('fullName') || 'Admin';
 
@@ -51,39 +59,44 @@ const AdminDashboard = () => {
         maintenanceDue: maintenanceRes.data.filter(m => m.status === 'PENDING').length,
       });
     } catch (error) {
-      console.error('Backend not connected, using demo data:', error);
-      
-      const mockVehicles = [
-        { id: 1, vehicleNumber: 'NF-001', model: 'Tesla Model S', status: 'AVAILABLE' },
-        { id: 2, vehicleNumber: 'NF-002', model: 'Toyota Camry', status: 'IN_USE' },
-        { id: 3, vehicleNumber: 'NF-003', model: 'Ford Explorer', status: 'AVAILABLE' },
-        { id: 4, vehicleNumber: 'NF-004', model: 'Honda Accord', status: 'MAINTENANCE' },
-        { id: 5, vehicleNumber: 'NF-005', model: 'Nissan Leaf', status: 'AVAILABLE' },
-      ];
-      
-      const mockBookings = [
-        { id: 1, status: 'CONFIRMED', totalPrice: 150, createdAt: new Date().toISOString() },
-        { id: 2, status: 'IN_PROGRESS', totalPrice: 200, createdAt: new Date().toISOString() },
-        { id: 3, status: 'PENDING', totalPrice: 100, createdAt: new Date().toISOString() },
-        { id: 4, status: 'COMPLETED', totalPrice: 250, createdAt: new Date().toISOString() },
-      ];
-      
-      const mockMaintenance = [
-        { id: 1, vehicle: { vehicleNumber: 'NF-004' }, issueType: 'Engine Check', priority: 'HIGH', isPredictive: true },
-        { id: 2, vehicle: { vehicleNumber: 'NF-002' }, issueType: 'Brake System', priority: 'CRITICAL', isPredictive: true },
-        { id: 3, vehicle: { vehicleNumber: 'NF-005' }, issueType: 'Battery Health', priority: 'MEDIUM', isPredictive: false },
-      ];
-      
-      setVehicles(mockVehicles);
-      setBookings(mockBookings);
-      setMaintenance(mockMaintenance);
-      
-      setStats({
-        totalFleet: mockVehicles.length,
-        activeTrips: mockBookings.filter(b => b.status === 'IN_PROGRESS').length,
-        revenue: mockBookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0),
-        maintenanceDue: mockMaintenance.length,
-      });
+      console.error('Error loading data:', error);
+    }
+  };
+
+  const handleAddVehicle = () => {
+    setSelectedVehicle(null);
+    setIsVehicleModalOpen(true);
+  };
+
+  const handleEditVehicle = (vehicle) => {
+    setSelectedVehicle(vehicle);
+    setIsVehicleModalOpen(true);
+  };
+
+  const handleSaveVehicle = async (vehicleData) => {
+    try {
+      if (selectedVehicle) {
+        await vehicleService.update(selectedVehicle.id, vehicleData);
+      } else {
+        await vehicleService.create(vehicleData);
+      }
+      await loadDashboardData();
+      setIsVehicleModalOpen(false);
+    } catch (error) {
+      console.error('Error saving vehicle:', error);
+      throw error;
+    }
+  };
+
+  const handleDeleteVehicle = async (id) => {
+    if (window.confirm('Are you sure you want to delete this vehicle?')) {
+      try {
+        await vehicleService.delete(id);
+        await loadDashboardData();
+      } catch (error) {
+        console.error('Error deleting vehicle:', error);
+        alert('Failed to delete vehicle. It may be in use.');
+      }
     }
   };
 
@@ -97,6 +110,7 @@ const AdminDashboard = () => {
       'AVAILABLE': 'status-available',
       'IN_USE': 'status-in-use',
       'MAINTENANCE': 'status-maintenance',
+      'OUT_OF_SERVICE': 'status-critical',
       'CONFIRMED': 'status-available',
       'IN_PROGRESS': 'status-in-use',
       'PENDING': 'status-maintenance',
@@ -106,6 +120,10 @@ const AdminDashboard = () => {
     };
     return statusMap[status] || 'status-maintenance';
   };
+
+  const filteredVehicles = filterStatus === 'ALL' 
+    ? vehicles 
+    : vehicles.filter(v => v.status === filterStatus);
 
   const kpiCards = [
     { 
@@ -173,12 +191,36 @@ const AdminDashboard = () => {
       </nav>
 
       <div className="relative max-w-7xl mx-auto p-6">
-        <div className="mb-8 animate-fade-in-down">
-          <h2 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-            <ChartIcon size="lg" className="text-accent-cyan" />
-            Dashboard Overview
-          </h2>
-          <p className="text-white/50">Monitor and manage your entire fleet operations</p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+              <ChartIcon size="lg" className="text-accent-cyan" />
+              Dashboard Overview
+            </h2>
+            <p className="text-white/50">Monitor and manage your entire fleet operations</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all duration-300 ${
+                activeTab === 'overview' 
+                  ? 'bg-gradient-to-r from-accent-cyan to-accent-blue text-white shadow-lg' 
+                  : 'text-white/70 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('vehicles')}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all duration-300 ${
+                activeTab === 'vehicles' 
+                  ? 'bg-gradient-to-r from-accent-cyan to-accent-blue text-white shadow-lg' 
+                  : 'text-white/70 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              Vehicle Management
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -213,89 +255,222 @@ const AdminDashboard = () => {
           })}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <div className="glass-card p-6 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-            <div className="flex items-center gap-3 mb-6">
-              <VehicleIcon size="md" className="text-accent-cyan" />
-              <h3 className="text-xl font-bold text-white">Fleet Status</h3>
-            </div>
-            <div className="space-y-3">
-              {vehicles.slice(0, 5).map((vehicle, index) => (
-                <div 
-                  key={vehicle.id} 
-                  className="flex items-center justify-between p-4 bg-dark-700/40 rounded-xl border border-white/5 hover:border-white/10 hover:bg-dark-700/60 transition-all duration-300"
-                  style={{ animationDelay: `${(index + 5) * 0.1}s` }}
-                >
-                  <div>
-                    <p className="font-semibold text-white">{vehicle.vehicleNumber}</p>
-                    <p className="text-sm text-white/50">{vehicle.model}</p>
-                  </div>
-                  <span className={`status-badge ${getStatusStyle(vehicle.status)}`}>
-                    <span className="w-2 h-2 rounded-full bg-current animate-pulse"></span>
-                    {vehicle.status}
-                  </span>
+        {activeTab === 'overview' && (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <div className="glass-card p-6 animate-fade-in-up">
+                <div className="flex items-center gap-3 mb-6">
+                  <VehicleIcon size="md" className="text-accent-cyan" />
+                  <h3 className="text-xl font-bold text-white">Fleet Status</h3>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="space-y-3">
+                  {vehicles.slice(0, 5).map((vehicle) => (
+                    <div 
+                      key={vehicle.id} 
+                      className="flex items-center justify-between p-4 bg-dark-700/40 rounded-xl border border-white/5 hover:border-white/10 hover:bg-dark-700/60 transition-all duration-300"
+                    >
+                      <div>
+                        <p className="font-semibold text-white">{vehicle.vehicleNumber}</p>
+                        <p className="text-sm text-white/50">{vehicle.model}</p>
+                      </div>
+                      <span className={`status-badge ${getStatusStyle(vehicle.status)}`}>
+                        <span className="w-2 h-2 rounded-full bg-current animate-pulse"></span>
+                        {vehicle.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-          <div className="glass-card p-6 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
-            <div className="flex items-center gap-3 mb-6">
-              <BookingIcon size="md" className="text-accent-purple" />
-              <h3 className="text-xl font-bold text-white">Recent Bookings</h3>
-            </div>
-            <div className="space-y-3">
-              {bookings.slice(0, 5).map((booking, index) => (
-                <div 
-                  key={booking.id} 
-                  className="flex items-center justify-between p-4 bg-dark-700/40 rounded-xl border border-white/5 hover:border-white/10 hover:bg-dark-700/60 transition-all duration-300"
-                >
-                  <div>
-                    <p className="font-semibold text-white">Booking #{booking.id}</p>
-                    <p className="text-sm text-white/50">{new Date(booking.createdAt).toLocaleDateString()}</p>
-                  </div>
-                  <span className={`status-badge ${getStatusStyle(booking.status)}`}>
-                    <span className="w-2 h-2 rounded-full bg-current animate-pulse"></span>
-                    {booking.status}
-                  </span>
+              <div className="glass-card p-6 animate-fade-in-up">
+                <div className="flex items-center gap-3 mb-6">
+                  <BookingIcon size="md" className="text-accent-purple" />
+                  <h3 className="text-xl font-bold text-white">Recent Bookings</h3>
                 </div>
-              ))}
+                <div className="space-y-3">
+                  {bookings.slice(0, 5).map((booking) => (
+                    <div 
+                      key={booking.id} 
+                      className="flex items-center justify-between p-4 bg-dark-700/40 rounded-xl border border-white/5 hover:border-white/10 hover:bg-dark-700/60 transition-all duration-300"
+                    >
+                      <div>
+                        <p className="font-semibold text-white">Booking #{booking.id}</p>
+                        <p className="text-sm text-white/50">{new Date(booking.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <span className={`status-badge ${getStatusStyle(booking.status)}`}>
+                        <span className="w-2 h-2 rounded-full bg-current animate-pulse"></span>
+                        {booking.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div className="glass-card p-6 animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
-          <div className="flex items-center gap-3 mb-6">
-            <AlertIcon size="md" className="text-accent-pink" />
-            <h3 className="text-xl font-bold text-white">Predictive Maintenance Alerts</h3>
-            <span className="ml-auto px-3 py-1 bg-accent-pink/20 text-accent-pink text-xs font-bold rounded-full animate-pulse">
-              AI-Powered
-            </span>
-          </div>
-          <div className="space-y-3">
-            {maintenance.filter(m => m.isPredictive).slice(0, 5).map((item, index) => (
-              <div 
-                key={item.id} 
-                className="flex items-center justify-between p-4 bg-accent-pink/5 border border-accent-pink/20 rounded-xl hover:border-accent-pink/40 hover:bg-accent-pink/10 transition-all duration-300"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-accent-pink/20 flex items-center justify-center">
-                    <MaintenanceIcon size="sm" className="text-accent-pink" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white">Vehicle #{item.vehicle?.vehicleNumber || 'N/A'}</p>
-                    <p className="text-sm text-white/50">{item.issueType}</p>
-                  </div>
-                </div>
-                <span className={`status-badge ${getStatusStyle(item.priority)}`}>
-                  <AlertIcon size="sm" />
-                  {item.priority}
+            <div className="glass-card p-6 animate-fade-in-up">
+              <div className="flex items-center gap-3 mb-6">
+                <AlertIcon size="md" className="text-accent-pink" />
+                <h3 className="text-xl font-bold text-white">Predictive Maintenance Alerts</h3>
+                <span className="ml-auto px-3 py-1 bg-accent-pink/20 text-accent-pink text-xs font-bold rounded-full animate-pulse">
+                  AI-Powered
                 </span>
               </div>
-            ))}
+              <div className="space-y-3">
+                {maintenance.filter(m => m.isPredictive).slice(0, 5).map((item) => (
+                  <div 
+                    key={item.id} 
+                    className="flex items-center justify-between p-4 bg-accent-pink/5 border border-accent-pink/20 rounded-xl hover:border-accent-pink/40 hover:bg-accent-pink/10 transition-all duration-300"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-accent-pink/20 flex items-center justify-center">
+                        <MaintenanceIcon size="sm" className="text-accent-pink" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">Vehicle #{item.vehicle?.vehicleNumber || 'N/A'}</p>
+                        <p className="text-sm text-white/50">{item.issueType}</p>
+                      </div>
+                    </div>
+                    <span className={`status-badge ${getStatusStyle(item.priority)}`}>
+                      <AlertIcon size="sm" />
+                      {item.priority}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {activeTab === 'vehicles' && (
+          <div className="glass-card p-6 animate-fade-in-up">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <VehicleIcon size="md" className="text-accent-cyan" />
+                <h3 className="text-xl font-bold text-white">Vehicle Management</h3>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <FilterIcon size="sm" className="text-white/50" />
+                  <select
+                    className="input-field py-2"
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                  >
+                    <option value="ALL">All Status</option>
+                    <option value="AVAILABLE">Available</option>
+                    <option value="IN_USE">In Use</option>
+                    <option value="MAINTENANCE">Maintenance</option>
+                    <option value="OUT_OF_SERVICE">Out of Service</option>
+                  </select>
+                </div>
+                <button
+                  onClick={handleAddVehicle}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  <VehicleIcon size="sm" />
+                  Add Vehicle
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredVehicles.map((vehicle) => (
+                <div 
+                  key={vehicle.id} 
+                  className="glass-card-hover p-6 group"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h4 className="text-lg font-bold text-white mb-1">{vehicle.model}</h4>
+                      <p className="text-sm text-white/50">{vehicle.vehicleNumber}</p>
+                    </div>
+                    <span className={`status-badge ${getStatusStyle(vehicle.status)}`}>
+                      <span className="w-2 h-2 rounded-full bg-current animate-pulse"></span>
+                      {vehicle.status}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 mb-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-white/60">Type:</span>
+                      <span className="text-white font-semibold">{vehicle.type}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-white/60">Capacity:</span>
+                      <span className="text-white font-semibold">{vehicle.capacity} seats</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-white/60">Fuel Type:</span>
+                      <span className="text-white font-semibold">
+                        {vehicle.isElectric ? '⚡ Electric' : '⛽ Fuel'}
+                      </span>
+                    </div>
+                    {vehicle.isElectric && (
+                      <div className="flex items-center gap-2">
+                        <BatteryIcon size="sm" className="text-accent-cyan" level={vehicle.batteryLevel || 100} />
+                        <div className="flex-1 h-2 bg-dark-700 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-accent-cyan to-accent-blue rounded-full transition-all duration-500"
+                            style={{ width: `${vehicle.batteryLevel || 100}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-xs text-white/70">{vehicle.batteryLevel || 100}%</span>
+                      </div>
+                    )}
+                    {!vehicle.isElectric && (
+                      <div className="flex items-center gap-2">
+                        <LocationIcon size="sm" className="text-accent-green" />
+                        <div className="flex-1 h-2 bg-dark-700 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-accent-green to-accent-cyan rounded-full transition-all duration-500"
+                            style={{ width: `${vehicle.fuelLevel || 100}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-xs text-white/70">{vehicle.fuelLevel || 100}%</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEditVehicle(vehicle)}
+                      className="flex-1 btn-secondary text-sm py-2"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteVehicle(vehicle.id)}
+                      className="flex-1 btn-secondary text-sm py-2 hover:bg-red-500/20 hover:border-red-500/40 hover:text-red-400"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {filteredVehicles.length === 0 && (
+              <div className="text-center py-12">
+                <VehicleIcon size="xl" className="text-white/20 mx-auto mb-4" />
+                <p className="text-white/50 text-lg">No vehicles found</p>
+                <button
+                  onClick={handleAddVehicle}
+                  className="btn-primary mt-4"
+                >
+                  Add Your First Vehicle
+                </button>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
+
+      <VehicleModal
+        isOpen={isVehicleModalOpen}
+        onClose={() => setIsVehicleModalOpen(false)}
+        onSave={handleSaveVehicle}
+        vehicle={selectedVehicle}
+      />
     </div>
   );
 };

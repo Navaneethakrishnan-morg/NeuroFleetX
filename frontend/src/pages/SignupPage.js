@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/api';
 import Logo from '../components/Logo';
 
-const SignupPageNew = () => {
+const SignupPage = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
@@ -223,4 +223,4 @@ const SignupPageNew = () => {
   );
 };
 
-export default SignupPageNew;
+export default SignupPage;
