@@ -58,4 +58,11 @@ export const maintenanceService = {
   update: (id, maintenance) => api.put(`/admin/maintenance/${id}`, maintenance),
 };
 
+export const userService = {
+  getAll: () => api.get('/admin/users'),
+  getByRole: (role) => api.get(`/admin/users/role/${role}`),
+  getById: (id) => api.get(`/admin/users/${id}`),
+  toggleActive: (id) => api.put(`/admin/users/${id}/toggle-active`),
+};
+
 export default api;

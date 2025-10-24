@@ -4,10 +4,10 @@ import WelcomePage from './pages/WelcomePage';
 import PortalSelectionPage from './pages/PortalSelectionPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
-import AdminDashboard from './pages/AdminDashboard';
-import ManagerDashboard from './pages/ManagerDashboard';
-import DriverDashboard from './pages/DriverDashboard';
-import CustomerDashboard from './pages/CustomerDashboard';
+import AdminDashboard from './pages/AdminDashboardNew';
+import ManagerDashboard from './pages/ManagerDashboardNew';
+import DriverDashboard from './pages/DriverDashboardNew';
+import CustomerDashboard from './pages/CustomerDashboardNew';
 
 function App() {
   return (
