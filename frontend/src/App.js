@@ -8,6 +8,8 @@ import AdminDashboard from './pages/AdminDashboardNew';
 import ManagerDashboard from './pages/ManagerDashboardNew';
 import DriverDashboard from './pages/DriverDashboardNew';
 import CustomerDashboard from './pages/CustomerDashboardNew';
+import FleetInventory from './pages/manager/FleetInventory';
+import RouteOptimization from './pages/manager/RouteOptimization';
 
 function App() {
   return (
@@ -21,6 +23,10 @@ function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/manager/dashboard" element={<ManagerDashboard />} />
+          <Route path="/manager/fleet-inventory" element={<FleetInventory />} />
+          <Route path="/manager/route-optimization" element={<RouteOptimization />} />
+          <Route path="/admin/fleet-inventory" element={<FleetInventory />} />
+          <Route path="/admin/route-optimization" element={<RouteOptimization />} />
           <Route path="/driver/dashboard" element={<DriverDashboard />} />
           <Route path="/customer/dashboard" element={<CustomerDashboard />} />
           <Route path="*" element={<Navigate to="/" replace />} />

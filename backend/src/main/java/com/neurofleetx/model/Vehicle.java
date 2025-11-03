@@ -57,6 +57,8 @@ public class Vehicle {
 
     private Integer healthScore = 100;
 
+    private Double speed = 0.0;
+
     public enum VehicleType {
         SEDAN, SUV, VAN, TRUCK, BUS, BIKE
     }

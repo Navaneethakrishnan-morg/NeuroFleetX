@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { VehicleIcon, CloseIcon } from './Icons';
 
-const VehicleModal = ({ isOpen, onClose, onSave, vehicle }) => {
+const VehicleModal = ({ vehicle, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     vehicleNumber: '',
     model: '',
     manufacturer: '',
     type: 'SEDAN',
-    capacity: 4,
+    capacity: 5,
     isElectric: false,
     status: 'AVAILABLE',
+    latitude: 40.7128,
+    longitude: -74.0060,
     batteryLevel: 100,
     fuelLevel: 100,
-    latitude: 0,
-    longitude: 0,
+    mileage: 0,
+    healthScore: 100,
+    speed: 0,
   });
 
   const [errors, setErrors] = useState({});
@@ -26,100 +28,122 @@ const VehicleModal = ({ isOpen, onClose, onSave, vehicle }) => {
         model: vehicle.model || '',
         manufacturer: vehicle.manufacturer || '',
         type: vehicle.type || 'SEDAN',
-        capacity: vehicle.capacity || 4,
+        capacity: vehicle.capacity || 5,
         isElectric: vehicle.isElectric || false,
         status: vehicle.status || 'AVAILABLE',
+        latitude: vehicle.latitude || 40.7128,
+        longitude: vehicle.longitude || -74.0060,
         batteryLevel: vehicle.batteryLevel || 100,
         fuelLevel: vehicle.fuelLevel || 100,
-        latitude: vehicle.latitude || 0,
-        longitude: vehicle.longitude || 0,
-      });
-    } else {
-      setFormData({
-        vehicleNumber: '',
-        model: '',
-        manufacturer: '',
-        type: 'SEDAN',
-        capacity: 4,
-        isElectric: false,
-        status: 'AVAILABLE',
-        batteryLevel: 100,
-        fuelLevel: 100,
-        latitude: 0,
-        longitude: 0,
+        mileage: vehicle.mileage || 0,
+        healthScore: vehicle.healthScore || 100,
+        speed: vehicle.speed || 0,
       });
     }
-    setErrors({});
-  }, [vehicle, isOpen]);
+  }, [vehicle]);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === 'checkbox' ? checked : value,
+    });
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: '' });
+    }
+  };
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.vehicleNumber.trim()) newErrors.vehicleNumber = 'Vehicle number is required';
-    if (!formData.model.trim()) newErrors.model = 'Model is required';
-    if (!formData.manufacturer.trim()) newErrors.manufacturer = 'Manufacturer is required';
-    if (formData.capacity < 1) newErrors.capacity = 'Capacity must be at least 1';
+
+    if (!formData.vehicleNumber.trim()) {
+      newErrors.vehicleNumber = 'Vehicle number is required';
+    }
+    if (!formData.model.trim()) {
+      newErrors.model = 'Model is required';
+    }
+    if (!formData.manufacturer.trim()) {
+      newErrors.manufacturer = 'Manufacturer is required';
+    }
+    if (formData.capacity < 1) {
+      newErrors.capacity = 'Capacity must be at least 1';
+    }
+    if (formData.batteryLevel < 0 || formData.batteryLevel > 100) {
+      newErrors.batteryLevel = 'Battery level must be between 0-100';
+    }
+    if (formData.fuelLevel < 0 || formData.fuelLevel > 100) {
+      newErrors.fuelLevel = 'Fuel level must be between 0-100';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     if (!validate()) return;
 
-    setLoading(true);
     try {
-      await onSave(formData);
+      setLoading(true);
+      const dataToSave = {
+        ...formData,
+        capacity: parseInt(formData.capacity),
+        batteryLevel: formData.isElectric ? parseInt(formData.batteryLevel) : null,
+        fuelLevel: !formData.isElectric ? parseInt(formData.fuelLevel) : null,
+        mileage: parseInt(formData.mileage),
+        healthScore: parseInt(formData.healthScore),
+        latitude: parseFloat(formData.latitude),
+        longitude: parseFloat(formData.longitude),
+        speed: parseFloat(formData.speed),
+      };
+      await onSave(dataToSave);
       onClose();
-    } catch (error) {
-      console.error('Error saving vehicle:', error);
+    } catch (err) {
       setErrors({ submit: 'Failed to save vehicle. Please try again.' });
     } finally {
       setLoading(false);
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="glass-card max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-fade-in-up">
-        <div className="sticky top-0 bg-dark-800/95 backdrop-blur-md border-b border-white/10 p-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-accent-cyan to-accent-blue">
-              <VehicleIcon size="md" className="text-white" />
-            </div>
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="glass-card max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-dark-800/95 backdrop-blur-sm p-6 border-b border-white/10">
+          <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-white">
               {vehicle ? 'Edit Vehicle' : 'Add New Vehicle'}
             </h2>
+            <button
+              onClick={onClose}
+              className="text-white/60 hover:text-white transition-colors"
+            >
+              <span className="text-2xl">×</span>
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="btn-icon hover:bg-dark-700"
-            disabled={loading}
-          >
-            <CloseIcon size="sm" />
-          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {errors.submit && (
-            <div className="px-4 py-3 rounded-lg bg-red-500/15 border border-red-500 text-red-400">
+            <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400">
               {errors.submit}
             </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold mb-2 text-white/90">
-                Vehicle Number <span className="text-red-400">*</span>
+              <label className="block text-white/80 text-sm font-semibold mb-2">
+                Vehicle Number *
               </label>
               <input
                 type="text"
-                className={`input-field ${errors.vehicleNumber ? 'border-red-500' : ''}`}
-                placeholder="e.g., NF-001"
+                name="vehicleNumber"
                 value={formData.vehicleNumber}
-                onChange={(e) => setFormData({ ...formData, vehicleNumber: e.target.value })}
-                disabled={loading}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 bg-dark-700 text-white rounded-lg border ${
+                  errors.vehicleNumber ? 'border-red-500' : 'border-white/10'
+                } focus:border-accent-cyan focus:outline-none transition-colors`}
+                placeholder="NF-001"
               />
               {errors.vehicleNumber && (
                 <p className="text-red-400 text-xs mt-1">{errors.vehicleNumber}</p>
@@ -127,16 +151,18 @@ const VehicleModal = ({ isOpen, onClose, onSave, vehicle }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-white/90">
-                Model <span className="text-red-400">*</span>
+              <label className="block text-white/80 text-sm font-semibold mb-2">
+                Model *
               </label>
               <input
                 type="text"
-                className={`input-field ${errors.model ? 'border-red-500' : ''}`}
-                placeholder="e.g., Tesla Model S"
+                name="model"
                 value={formData.model}
-                onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                disabled={loading}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 bg-dark-700 text-white rounded-lg border ${
+                  errors.model ? 'border-red-500' : 'border-white/10'
+                } focus:border-accent-cyan focus:outline-none transition-colors`}
+                placeholder="Model S"
               />
               {errors.model && (
                 <p className="text-red-400 text-xs mt-1">{errors.model}</p>
@@ -144,16 +170,18 @@ const VehicleModal = ({ isOpen, onClose, onSave, vehicle }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-white/90">
-                Manufacturer <span className="text-red-400">*</span>
+              <label className="block text-white/80 text-sm font-semibold mb-2">
+                Manufacturer *
               </label>
               <input
                 type="text"
-                className={`input-field ${errors.manufacturer ? 'border-red-500' : ''}`}
-                placeholder="e.g., Tesla"
+                name="manufacturer"
                 value={formData.manufacturer}
-                onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
-                disabled={loading}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 bg-dark-700 text-white rounded-lg border ${
+                  errors.manufacturer ? 'border-red-500' : 'border-white/10'
+                } focus:border-accent-cyan focus:outline-none transition-colors`}
+                placeholder="Tesla"
               />
               {errors.manufacturer && (
                 <p className="text-red-400 text-xs mt-1">{errors.manufacturer}</p>
@@ -161,14 +189,14 @@ const VehicleModal = ({ isOpen, onClose, onSave, vehicle }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-white/90">
-                Vehicle Type
+              <label className="block text-white/80 text-sm font-semibold mb-2">
+                Type *
               </label>
               <select
-                className="input-field"
+                name="type"
                 value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                disabled={loading}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-dark-700 text-white rounded-lg border border-white/10 focus:border-accent-cyan focus:outline-none transition-colors"
               >
                 <option value="SEDAN">Sedan</option>
                 <option value="SUV">SUV</option>
@@ -180,16 +208,18 @@ const VehicleModal = ({ isOpen, onClose, onSave, vehicle }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-white/90">
-                Capacity (Seats)
+              <label className="block text-white/80 text-sm font-semibold mb-2">
+                Capacity *
               </label>
               <input
                 type="number"
-                className={`input-field ${errors.capacity ? 'border-red-500' : ''}`}
-                min="1"
+                name="capacity"
                 value={formData.capacity}
-                onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || 0 })}
-                disabled={loading}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 bg-dark-700 text-white rounded-lg border ${
+                  errors.capacity ? 'border-red-500' : 'border-white/10'
+                } focus:border-accent-cyan focus:outline-none transition-colors`}
+                min="1"
               />
               {errors.capacity && (
                 <p className="text-red-400 text-xs mt-1">{errors.capacity}</p>
@@ -197,14 +227,14 @@ const VehicleModal = ({ isOpen, onClose, onSave, vehicle }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-white/90">
-                Status
+              <label className="block text-white/80 text-sm font-semibold mb-2">
+                Status *
               </label>
               <select
-                className="input-field"
+                name="status"
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                disabled={loading}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-dark-700 text-white rounded-lg border border-white/10 focus:border-accent-cyan focus:outline-none transition-colors"
               >
                 <option value="AVAILABLE">Available</option>
                 <option value="IN_USE">In Use</option>
@@ -214,65 +244,132 @@ const VehicleModal = ({ isOpen, onClose, onSave, vehicle }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-white/90">
-                Battery Level (%)
+              <label className="block text-white/80 text-sm font-semibold mb-2">
+                Latitude
               </label>
               <input
                 type="number"
-                className="input-field"
-                min="0"
-                max="100"
-                value={formData.batteryLevel}
-                onChange={(e) => setFormData({ ...formData, batteryLevel: parseInt(e.target.value) || 0 })}
-                disabled={loading}
+                name="latitude"
+                value={formData.latitude}
+                onChange={handleChange}
+                step="0.0001"
+                className="w-full px-4 py-3 bg-dark-700 text-white rounded-lg border border-white/10 focus:border-accent-cyan focus:outline-none transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-white/90">
-                Fuel Level (%)
+              <label className="block text-white/80 text-sm font-semibold mb-2">
+                Longitude
               </label>
               <input
                 type="number"
-                className="input-field"
-                min="0"
-                max="100"
-                value={formData.fuelLevel}
-                onChange={(e) => setFormData({ ...formData, fuelLevel: parseInt(e.target.value) || 0 })}
-                disabled={loading}
+                name="longitude"
+                value={formData.longitude}
+                onChange={handleChange}
+                step="0.0001"
+                className="w-full px-4 py-3 bg-dark-700 text-white rounded-lg border border-white/10 focus:border-accent-cyan focus:outline-none transition-colors"
               />
             </div>
-          </div>
 
-          <div className="flex items-center gap-3 p-4 bg-dark-700/40 rounded-xl border border-white/5">
-            <input
-              type="checkbox"
-              id="isElectric"
-              className="w-5 h-5 accent-accent-cyan"
-              checked={formData.isElectric}
-              onChange={(e) => setFormData({ ...formData, isElectric: e.target.checked })}
-              disabled={loading}
-            />
-            <label htmlFor="isElectric" className="text-sm font-semibold text-white/90 cursor-pointer">
-              ⚡ Electric Vehicle
-            </label>
+            <div>
+              <label className="block text-white/80 text-sm font-semibold mb-2">
+                Mileage
+              </label>
+              <input
+                type="number"
+                name="mileage"
+                value={formData.mileage}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-dark-700 text-white rounded-lg border border-white/10 focus:border-accent-cyan focus:outline-none transition-colors"
+                min="0"
+              />
+            </div>
+
+            <div>
+              <label className="block text-white/80 text-sm font-semibold mb-2">
+                Health Score
+              </label>
+              <input
+                type="number"
+                name="healthScore"
+                value={formData.healthScore}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-dark-700 text-white rounded-lg border border-white/10 focus:border-accent-cyan focus:outline-none transition-colors"
+                min="0"
+                max="100"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="isElectric"
+                  checked={formData.isElectric}
+                  onChange={handleChange}
+                  className="w-5 h-5 rounded bg-dark-700 border-white/10 text-accent-cyan focus:ring-accent-cyan focus:ring-2"
+                />
+                <span className="text-white/80 font-semibold">Electric Vehicle</span>
+              </label>
+            </div>
+
+            {formData.isElectric ? (
+              <div>
+                <label className="block text-white/80 text-sm font-semibold mb-2">
+                  Battery Level (%)
+                </label>
+                <input
+                  type="number"
+                  name="batteryLevel"
+                  value={formData.batteryLevel}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 bg-dark-700 text-white rounded-lg border ${
+                    errors.batteryLevel ? 'border-red-500' : 'border-white/10'
+                  } focus:border-accent-cyan focus:outline-none transition-colors`}
+                  min="0"
+                  max="100"
+                />
+                {errors.batteryLevel && (
+                  <p className="text-red-400 text-xs mt-1">{errors.batteryLevel}</p>
+                )}
+              </div>
+            ) : (
+              <div>
+                <label className="block text-white/80 text-sm font-semibold mb-2">
+                  Fuel Level (%)
+                </label>
+                <input
+                  type="number"
+                  name="fuelLevel"
+                  value={formData.fuelLevel}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 bg-dark-700 text-white rounded-lg border ${
+                    errors.fuelLevel ? 'border-red-500' : 'border-white/10'
+                  } focus:border-accent-cyan focus:outline-none transition-colors`}
+                  min="0"
+                  max="100"
+                />
+                {errors.fuelLevel && (
+                  <p className="text-red-400 text-xs mt-1">{errors.fuelLevel}</p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-4 pt-4">
             <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 btn-secondary"
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
               type="submit"
-              className="flex-1 btn-primary"
               disabled={loading}
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-accent-cyan to-accent-blue text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-accent-cyan/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Saving...' : vehicle ? 'Update Vehicle' : 'Add Vehicle'}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-3 bg-dark-700 text-white font-semibold rounded-lg hover:bg-dark-600 transition-colors"
+            >
+              Cancel
             </button>
           </div>
         </form>
