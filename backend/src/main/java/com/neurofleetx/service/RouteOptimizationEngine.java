@@ -72,7 +72,6 @@ public class RouteOptimizationEngine {
         
         PriorityQueue<Node> queue = new PriorityQueue<>();
         Map<String, Double> distances = new HashMap<>();
-        Map<String, List<String>> paths = new HashMap<>();
         Set<String> visited = new HashSet<>();
         
         queue.add(new Node(start, 0, 0, Arrays.asList(start)));
@@ -209,12 +208,15 @@ public class RouteOptimizationEngine {
         List<String> waypoints = new ArrayList<>();
         waypoints.add("Start");
         
-        String[] intermediatePoints = {
-            "Highway-1", "Junction-A", "Downtown", "Bridge-North",
-            "Industrial-Zone", "Park-Avenue", "Main-Street", "Station-Central"
-        };
+        waypoints.add("Highway-1");
+        waypoints.add("Junction-A");
+        waypoints.add("Downtown");
+        waypoints.add("Bridge-North");
+        waypoints.add("Industrial-Zone");
+        waypoints.add("Park-Avenue");
+        waypoints.add("Main-Street");
+        waypoints.add("Station-Central");
         
-        Collections.addAll(waypoints, intermediatePoints);
         waypoints.add("End");
         
         return waypoints;

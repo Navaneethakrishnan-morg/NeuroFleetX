@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class ManagerService {
@@ -18,13 +17,7 @@ public class ManagerService {
     private UserRepository userRepository;
 
     @Autowired
-    private TripRepository tripRepository;
-
-    @Autowired
     private VehicleRepository vehicleRepository;
-
-    @Autowired
-    private MaintenanceRepository maintenanceRepository;
 
     public List<DriverPerformanceDTO> getDriverPerformanceMetrics() {
         List<User> drivers = userRepository.findByRole(User.UserRole.DRIVER);
