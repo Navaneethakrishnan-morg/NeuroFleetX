@@ -1,6 +1,8 @@
 package com.neurofleetx.service;
 
+import com.neurofleetx.model.Booking;
 import com.neurofleetx.model.Vehicle;
+import com.neurofleetx.repository.BookingRepository;
 import com.neurofleetx.repository.VehicleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -8,11 +10,15 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Service
 public class VehicleService {
     @Autowired
     private VehicleRepository vehicleRepository;
+    
+    @Autowired
+    private BookingRepository bookingRepository;
 
     private Random random = new Random();
 
@@ -31,6 +37,22 @@ public class VehicleService {
 
     public List<Vehicle> getVehiclesByType(Vehicle.VehicleType type) {
         return vehicleRepository.findByType(type);
+    }
+    
+    public List<Vehicle> getAvailableUnbookedVehicles() {
+        List<Vehicle> availableVehicles = vehicleRepository.findByStatus(Vehicle.VehicleStatus.AVAILABLE);
+        
+        List<Booking> activeBookings = bookingRepository.findAll().stream()
+                .filter(b -> b.getStatus() == Booking.BookingStatus.PENDING || 
+                            b.getStatus() == Booking.BookingStatus.CONFIRMED || 
+                            b.getStatus() == Booking.BookingStatus.IN_PROGRESS)
+                .collect(Collectors.toList());
+        
+        return availableVehicles.stream()
+                .filter(vehicle -> activeBookings.stream()
+                        .noneMatch(booking -> booking.getVehicle() != null && 
+                                             booking.getVehicle().getId().equals(vehicle.getId())))
+                .collect(Collectors.toList());
     }
 
     public Vehicle createVehicle(Vehicle vehicle) {

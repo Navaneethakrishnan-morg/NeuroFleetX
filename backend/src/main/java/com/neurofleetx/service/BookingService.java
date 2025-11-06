@@ -86,13 +86,21 @@ public class BookingService {
                 .noneMatch(b -> !(b.getEndTime().isBefore(startTime) || b.getStartTime().isAfter(endTime)));
     }
 
-    public Booking createBooking(Booking booking) {
-        if (!isVehicleAvailable(booking.getVehicle().getId(), booking.getStartTime(), booking.getEndTime())) {
+    public Booking createBooking(String username, Booking booking) {
+        User customer = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        Vehicle vehicle = vehicleRepository.findById(booking.getVehicle().getId())
+                .orElseThrow(() -> new RuntimeException("Vehicle not found"));
+
+        if (!isVehicleAvailable(vehicle.getId(), booking.getStartTime(), booking.getEndTime())) {
             throw new RuntimeException("Vehicle is not available for the selected time period");
         }
 
+        booking.setCustomer(customer);
+        booking.setVehicle(vehicle);
         booking.setCreatedAt(LocalDateTime.now());
-        booking.setStatus(Booking.BookingStatus.PENDING);
+        booking.setStatus(Booking.BookingStatus.CONFIRMED);
         booking.setTotalPrice(calculateTotalPrice(booking.getStartTime(), booking.getEndTime()));
         return bookingRepository.save(booking);
     }

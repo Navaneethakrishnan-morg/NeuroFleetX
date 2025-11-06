@@ -27,7 +27,12 @@ public class VehicleController {
 
     @GetMapping("/customer/vehicles")
     public ResponseEntity<List<Vehicle>> getAvailableVehiclesForCustomer() {
-        return ResponseEntity.ok(vehicleService.getAllVehicles());
+        return ResponseEntity.ok(vehicleService.getAvailableUnbookedVehicles());
+    }
+    
+    @GetMapping("/customer/vehicles/available")
+    public ResponseEntity<List<Vehicle>> getAvailableVehicles() {
+        return ResponseEntity.ok(vehicleService.getAvailableUnbookedVehicles());
     }
 
     @GetMapping("/vehicles/{id}")
@@ -70,6 +75,17 @@ public class VehicleController {
     public ResponseEntity<String> initializeGPSCoordinates() {
         int count = vehicleService.initializeAllVehicleGPS();
         return ResponseEntity.ok("Initialized GPS coordinates for " + count + " vehicles");
+    }
+
+    @GetMapping("/vehicles/active-locations")
+    public ResponseEntity<List<Vehicle>> getActiveVehicleLocations() {
+        List<Vehicle> vehicles = vehicleService.getAllVehicles().stream()
+                .filter(v -> (v.getStatus() == Vehicle.VehicleStatus.AVAILABLE || 
+                             v.getStatus() == Vehicle.VehicleStatus.IN_USE) &&
+                            v.getLatitude() != null && 
+                            v.getLongitude() != null)
+                .toList();
+        return ResponseEntity.ok(vehicles);
     }
 
     @GetMapping("/vehicles/filter")

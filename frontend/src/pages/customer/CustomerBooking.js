@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { bookingService } from '../../services/api';
 import VehicleRecommendationCard from '../../components/VehicleRecommendationCard';
 import BookingCalendar from '../../components/BookingCalendar';
+import './CustomerBooking.css';
 
 const CustomerBooking = () => {
   const [recommendations, setRecommendations] = useState([]);

@@ -38,15 +38,29 @@ export const vehicleService = {
   delete: (id) => api.delete(`/admin/vehicles/${id}`),
   updateTelemetry: (id) => api.put(`/vehicles/${id}/telemetry`),
   getByStatus: (status) => api.get(`/vehicles/status/${status}`),
+  getActiveVehicleLocations: () => api.get('/vehicles/active-locations'),
+  initializeGPS: () => api.post('/admin/vehicles/initialize-gps'),
 };
 
 export const bookingService = {
   getAll: () => api.get('/admin/bookings'),
   getCustomerBookings: (username) => api.get(`/customer/bookings?username=${username}`),
   getById: (id) => api.get(`/bookings/${id}`),
-  create: (booking) => api.post('/customer/bookings', booking),
+  create: (username, booking) => api.post(`/customer/bookings?username=${username}`, booking),
   update: (id, booking) => api.put(`/bookings/${id}`, booking),
+  cancel: (id) => api.put(`/customer/bookings/${id}/cancel`),
   getRecommended: (username) => api.get(`/customer/bookings/recommended?username=${username}`),
+  searchVehicles: (username, filters) => api.post(`/customer/bookings/search?username=${username}`, filters),
+  checkAvailability: (request) => api.post('/customer/bookings/availability', request),
+};
+
+export const supportService = {
+  getAllTickets: () => api.get('/admin/support/tickets'),
+  getCustomerTickets: (username) => api.get(`/customer/support/tickets?username=${username}`),
+  getTicketById: (id) => api.get(`/support/tickets/${id}`),
+  createTicket: (username, ticket) => api.post(`/customer/support/tickets?username=${username}`, ticket),
+  updateTicket: (id, ticket) => api.put(`/support/tickets/${id}`, ticket),
+  deleteTicket: (id) => api.delete(`/support/tickets/${id}`),
 };
 
 export const maintenanceService = {

@@ -30,9 +30,13 @@ const BookingCalendar = ({ vehicle, onClose, onBookingComplete }) => {
         startDate: dateRange.startDate,
         endDate: dateRange.endDate,
       });
-      setAvailability(response.data);
+      console.log('Availability response:', response.data);
+      // Backend returns an array, get the first element
+      const availabilityData = Array.isArray(response.data) ? response.data[0] : response.data;
+      setAvailability(availabilityData);
     } catch (error) {
       console.error('Error loading availability:', error);
+      alert('Failed to load availability. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -52,20 +56,27 @@ const BookingCalendar = ({ vehicle, onClose, onBookingComplete }) => {
 
     setLoading(true);
     try {
-      await bookingService.create(username, {
+      const bookingData = {
         vehicle: { id: vehicle.id },
         startTime: selectedSlot.startTime,
         endTime: selectedSlot.endTime,
         pickupLocation: bookingDetails.pickupLocation,
         dropoffLocation: bookingDetails.dropoffLocation,
         totalPrice: selectedSlot.price,
-      });
+      };
+      console.log('Creating booking with data:', bookingData);
+      
+      const response = await bookingService.create(username, bookingData);
+      console.log('Booking created successfully:', response.data);
+      
       setBookingStatus('success');
       setTimeout(() => {
         onBookingComplete();
       }, 2000);
     } catch (error) {
       console.error('Error creating booking:', error);
+      console.error('Error response:', error.response?.data);
+      alert(`Failed to create booking: ${error.response?.data?.message || error.message}`);
       setBookingStatus('error');
     } finally {
       setLoading(false);
@@ -156,7 +167,7 @@ const BookingCalendar = ({ vehicle, onClose, onBookingComplete }) => {
                 </div>
               ) : (
                 <>
-                  {availability && (
+                  {availability && availability.pricePerHour && (
                     <>
                       <div className="availability-info">
                         <div className="info-card">
@@ -165,18 +176,18 @@ const BookingCalendar = ({ vehicle, onClose, onBookingComplete }) => {
                         </div>
                         <div className="info-card">
                           <span className="info-label">Available Slots</span>
-                          <span className="info-value">{availability.availableSlots.length}</span>
+                          <span className="info-value">{availability.availableSlots?.length || 0}</span>
                         </div>
                         <div className="info-card">
                           <span className="info-label">Booked Slots</span>
-                          <span className="info-value">{availability.bookedSlots.length}</span>
+                          <span className="info-value">{availability.bookedSlots?.length || 0}</span>
                         </div>
                       </div>
 
                       <div className="slots-section">
                         <h3 className="slots-title">Available Time Slots</h3>
                         <div className="slots-grid">
-                          {availability.availableSlots.map((slot, index) => (
+                          {(availability.availableSlots || []).map((slot, index) => (
                             <div
                               key={index}
                               className={`time-slot ${selectedSlot === slot ? 'selected' : ''}`}
@@ -191,10 +202,10 @@ const BookingCalendar = ({ vehicle, onClose, onBookingComplete }) => {
                                   <p className="slot-duration">{formatDuration(slot.startTime, slot.endTime)}</p>
                                 </div>
                               </div>
-                              <div className="slot-price">${slot.price.toFixed(2)}</div>
+                              <div className="slot-price">${slot.price?.toFixed(2) || '0.00'}</div>
                             </div>
                           ))}
-                          {availability.availableSlots.length === 0 && (
+                          {(!availability.availableSlots || availability.availableSlots.length === 0) && (
                             <div className="no-slots">
                               <p>No available slots in this date range</p>
                               <p className="no-slots-subtitle">Try selecting different dates</p>
@@ -247,11 +258,11 @@ const BookingCalendar = ({ vehicle, onClose, onBookingComplete }) => {
                             </div>
                             <div className="summary-row">
                               <span>Rate:</span>
-                              <span>${availability.pricePerHour.toFixed(2)}/hr</span>
+                              <span>${availability.pricePerHour?.toFixed(2) || '0.00'}/hr</span>
                             </div>
                             <div className="summary-row total">
                               <span>Total:</span>
-                              <span>${selectedSlot.price.toFixed(2)}</span>
+                              <span>${selectedSlot.price?.toFixed(2) || '0.00'}</span>
                             </div>
                           </div>
                         </div>

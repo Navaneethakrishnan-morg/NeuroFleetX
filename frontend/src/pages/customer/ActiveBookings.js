@@ -31,6 +31,18 @@ const ActiveBookings = () => {
     }
   };
 
+  const handleCancelBooking = async (bookingId) => {
+    if (window.confirm('Are you sure you want to cancel this booking?')) {
+      try {
+        await bookingService.cancel(bookingId);
+        await loadBookings();
+      } catch (error) {
+        console.error('Error canceling booking:', error);
+        alert('Failed to cancel booking. Please try again.');
+      }
+    }
+  };
+
   const handleTrackVehicle = (booking) => {
     setSelectedBooking(booking);
     setShowMap(true);
@@ -210,8 +222,11 @@ const ActiveBookings = () => {
                     <button className="btn-secondary">
                       View Details
                     </button>
-                    {booking.status === 'PENDING' && (
-                      <button className="btn-secondary text-accent-pink border-accent-pink hover:bg-accent-pink/10">
+                    {(booking.status === 'PENDING' || booking.status === 'CONFIRMED') && (
+                      <button 
+                        onClick={() => handleCancelBooking(booking.id)}
+                        className="btn-secondary text-accent-pink border-accent-pink hover:bg-accent-pink/10"
+                      >
                         Cancel Booking
                       </button>
                     )}

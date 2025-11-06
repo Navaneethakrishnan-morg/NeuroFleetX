@@ -1,5 +1,7 @@
 package com.neurofleetx.service;
 
+import com.neurofleetx.dto.BookingAvailabilityRequest;
+import com.neurofleetx.dto.BookingAvailabilityResponse;
 import com.neurofleetx.dto.VehicleRecommendationResponse;
 import com.neurofleetx.dto.VehicleSearchRequest;
 import com.neurofleetx.model.*;
@@ -8,7 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -249,5 +253,58 @@ public class RecommendationEngine {
         preference.setUpdatedAt(LocalDateTime.now());
 
         preferenceRepository.save(preference);
+    }
+
+    public List<VehicleRecommendationResponse> searchVehicles(String username, VehicleSearchRequest searchRequest) {
+        return getRecommendedVehicles(username, searchRequest);
+    }
+
+    public List<BookingAvailabilityResponse> checkVehicleAvailability(BookingAvailabilityRequest request) {
+        Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
+                .orElseThrow(() -> new RuntimeException("Vehicle not found"));
+
+        LocalDate startDate = request.getStartDate();
+        LocalDate endDate = request.getEndDate();
+        double pricePerHour = calculatePricePerHour(vehicle);
+
+        List<Booking> vehicleBookings = bookingRepository.findByVehicle(vehicle).stream()
+                .filter(b -> b.getStatus() != Booking.BookingStatus.CANCELLED 
+                        && b.getStatus() != Booking.BookingStatus.COMPLETED)
+                .collect(Collectors.toList());
+
+        List<BookingAvailabilityResponse.TimeSlot> availableSlots = new ArrayList<>();
+        List<BookingAvailabilityResponse.TimeSlot> bookedSlots = new ArrayList<>();
+
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+            for (int hour = 0; hour < 24; hour++) {
+                LocalDateTime slotStart = LocalDateTime.of(date, LocalTime.of(hour, 0));
+                LocalDateTime slotEnd = slotStart.plusHours(1);
+
+                boolean isAvailable = vehicleBookings.stream()
+                        .noneMatch(b -> !(b.getEndTime().isBefore(slotStart) || b.getStartTime().isAfter(slotEnd)));
+
+                BookingAvailabilityResponse.TimeSlot slot = new BookingAvailabilityResponse.TimeSlot(
+                    slotStart,
+                    slotEnd,
+                    pricePerHour,
+                    isAvailable
+                );
+
+                if (isAvailable) {
+                    availableSlots.add(slot);
+                } else {
+                    bookedSlots.add(slot);
+                }
+            }
+        }
+
+        BookingAvailabilityResponse response = new BookingAvailabilityResponse(
+            vehicle.getId(),
+            availableSlots,
+            bookedSlots,
+            pricePerHour
+        );
+
+        return List.of(response);
     }
 }

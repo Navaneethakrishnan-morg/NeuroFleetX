@@ -7,6 +7,8 @@ import Profile from './customer/Profile';
 import PaymentHistory from './customer/PaymentHistory';
 import TripHistory from './customer/TripHistory';
 import CustomerSupport from './customer/CustomerSupport';
+import CustomerBooking from './customer/CustomerBooking';
+import LiveVehicleMapStreet from '../components/LiveVehicleMapStreet';
 import {
   VehicleIcon,
   BookingIcon,
@@ -82,6 +84,18 @@ const CustomerDashboardNew = () => {
     }
   };
 
+  const handleCancelBooking = async (bookingId) => {
+    if (window.confirm('Are you sure you want to cancel this booking?')) {
+      try {
+        await bookingService.cancel(bookingId);
+        await loadData();
+      } catch (error) {
+        console.error('Error canceling booking:', error);
+        alert('Failed to cancel booking. Please try again.');
+      }
+    }
+  };
+
   const filteredVehicles = vehicles.filter(v => {
     if (filterType !== 'ALL' && v.type !== filterType) return false;
     if (filterElectric && !v.isElectric) return false;
@@ -115,6 +129,10 @@ const CustomerDashboardNew = () => {
         return renderBrowseVehicles();
       case 'bookings':
         return renderMyBookings();
+      case 'smart-booking':
+        return <CustomerBooking />;
+      case 'live-tracking':
+        return <LiveVehicleMapStreet />;
       case 'trips':
         return <TripHistory />;
       case 'payments':
@@ -341,6 +359,17 @@ const CustomerDashboardNew = () => {
                   </div>
                 </div>
               </div>
+
+              {(booking.status === 'PENDING' || booking.status === 'CONFIRMED') && (
+                <div className="flex items-center gap-3 pt-4 mt-4 border-t border-white/10">
+                  <button 
+                    onClick={() => handleCancelBooking(booking.id)}
+                    className="btn-secondary text-accent-pink border-accent-pink hover:bg-accent-pink/10"
+                  >
+                    Cancel Booking
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -397,6 +426,8 @@ const CustomerDashboardNew = () => {
           <div className="flex gap-2 pb-3 overflow-x-auto">
             {[
               { id: 'browse', label: 'Browse Vehicles', icon: VehicleIcon },
+              { id: 'smart-booking', label: '⚡ Smart Booking', icon: BookingIcon },
+              { id: 'live-tracking', label: '📍 Live Tracking', icon: LocationIcon },
               { id: 'bookings', label: 'My Bookings', icon: BookingIcon },
               { id: 'trips', label: 'Trip History', icon: RouteIcon },
               { id: 'payments', label: 'Payments', icon: RevenueIcon },
@@ -414,8 +445,14 @@ const CustomerDashboardNew = () => {
                       : 'text-white/70 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <TabIcon size="sm" />
-                  {tab.label}
+                  {tab.id === 'smart-booking' || tab.id === 'live-tracking' ? (
+                    tab.label
+                  ) : (
+                    <>
+                      <TabIcon size="sm" />
+                      {tab.label}
+                    </>
+                  )}
                 </button>
               );
             })}
