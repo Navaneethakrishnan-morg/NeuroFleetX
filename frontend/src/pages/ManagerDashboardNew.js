@@ -5,11 +5,12 @@ import FleetOverview from './manager/FleetOverview';
 import DriverPerformance from './manager/DriverPerformance';
 import RouteOptimization from './manager/RouteOptimization';
 import Reports from './manager/Reports';
+import PendingBookings from './manager/PendingBookings';
 import { VehicleIcon, TrendingUpIcon, RouteIcon, ChartIcon, LogoutIcon } from '../components/Icons';
 
 const ManagerDashboardNew = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('fleet');
+  const [activeTab, setActiveTab] = useState('bookings');
   const fullName = localStorage.getItem('fullName') || 'Manager';
 
   const handleLogout = () => {
@@ -19,6 +20,8 @@ const ManagerDashboardNew = () => {
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'bookings':
+        return <PendingBookings />;
       case 'fleet':
         return <FleetOverview />;
       case 'drivers':
@@ -28,7 +31,7 @@ const ManagerDashboardNew = () => {
       case 'reports':
         return <Reports />;
       default:
-        return <FleetOverview />;
+        return <PendingBookings />;
     }
   };
 
@@ -66,8 +69,9 @@ const ManagerDashboardNew = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex gap-2 pb-3">
+          <div className="flex gap-2 pb-3 overflow-x-auto">
             {[
+              { id: 'bookings', label: 'Pending Bookings', icon: ChartIcon },
               { id: 'fleet', label: 'Fleet Overview', icon: VehicleIcon },
               { id: 'drivers', label: 'Driver Performance', icon: TrendingUpIcon },
               { id: 'routes', label: 'Route Optimization', icon: RouteIcon },

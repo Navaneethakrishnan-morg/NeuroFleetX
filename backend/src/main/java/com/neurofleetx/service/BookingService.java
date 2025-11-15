@@ -100,8 +100,63 @@ public class BookingService {
         booking.setCustomer(customer);
         booking.setVehicle(vehicle);
         booking.setCreatedAt(LocalDateTime.now());
-        booking.setStatus(Booking.BookingStatus.CONFIRMED);
+        booking.setStatus(Booking.BookingStatus.PENDING);
         booking.setTotalPrice(calculateTotalPrice(booking.getStartTime(), booking.getEndTime()));
+        return bookingRepository.save(booking);
+    }
+
+    public List<Booking> getPendingBookingsForManager() {
+        return bookingRepository.findByStatus(Booking.BookingStatus.PENDING);
+    }
+
+    public Booking approveBookingByManager(Long bookingId) {
+        Booking booking = getBookingById(bookingId);
+        if (booking.getStatus() != Booking.BookingStatus.PENDING) {
+            throw new RuntimeException("Booking is not in pending approval status");
+        }
+        booking.setStatus(Booking.BookingStatus.CONFIRMED);
+        booking.setUpdatedAt(LocalDateTime.now());
+        return bookingRepository.save(booking);
+    }
+
+    public Booking assignDriverToBooking(Long bookingId, Long driverId) {
+        Booking booking = getBookingById(bookingId);
+        User driver = userRepository.findById(driverId)
+                .orElseThrow(() -> new RuntimeException("Driver not found"));
+        
+        if (driver.getRole() != User.UserRole.DRIVER) {
+            throw new RuntimeException("Selected user is not a driver");
+        }
+        
+        if (booking.getStatus() != Booking.BookingStatus.CONFIRMED) {
+            throw new RuntimeException("Booking must be confirmed before assigning driver");
+        }
+        
+        booking.setDriver(driver);
+        booking.setStatus(Booking.BookingStatus.CONFIRMED);
+        booking.setUpdatedAt(LocalDateTime.now());
+        return bookingRepository.save(booking);
+    }
+
+    public List<User> getAvailableDrivers() {
+        return userRepository.findByRole(User.UserRole.DRIVER).stream()
+                .filter(User::getActive)
+                .collect(Collectors.toList());
+    }
+
+    public List<Booking> getDriverAssignedBookings(String driverUsername) {
+        User driver = userRepository.findByUsername(driverUsername)
+                .orElseThrow(() -> new RuntimeException("Driver not found"));
+        return bookingRepository.findByDriver(driver);
+    }
+
+    public Booking startTripByDriver(Long bookingId) {
+        Booking booking = getBookingById(bookingId);
+        if (booking.getStatus() != Booking.BookingStatus.CONFIRMED) {
+            throw new RuntimeException("Booking must be confirmed to start trip");
+        }
+        booking.setStatus(Booking.BookingStatus.IN_PROGRESS);
+        booking.setUpdatedAt(LocalDateTime.now());
         return bookingRepository.save(booking);
     }
 

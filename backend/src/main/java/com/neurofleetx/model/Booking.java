@@ -24,6 +24,10 @@ public class Booking {
     @JoinColumn(name = "vehicle_id", nullable = false)
     private Vehicle vehicle;
 
+    @ManyToOne
+    @JoinColumn(name = "driver_id")
+    private User driver;
+
     @Column(nullable = false)
     private LocalDateTime startTime;
 

@@ -70,4 +70,36 @@ public class BookingController {
     public ResponseEntity<Booking> cancelBooking(@PathVariable Long id) {
         return ResponseEntity.ok(bookingService.cancelBooking(id));
     }
+
+    // Manager endpoints
+    @GetMapping("/manager/bookings/pending")
+    public ResponseEntity<List<Booking>> getPendingBookingsForManager() {
+        return ResponseEntity.ok(bookingService.getPendingBookingsForManager());
+    }
+
+    @PutMapping("/manager/bookings/{id}/approve")
+    public ResponseEntity<Booking> approveBooking(@PathVariable Long id) {
+        return ResponseEntity.ok(bookingService.approveBookingByManager(id));
+    }
+
+    @PutMapping("/manager/bookings/{id}/assign-driver")
+    public ResponseEntity<Booking> assignDriver(@PathVariable Long id, @RequestParam Long driverId) {
+        return ResponseEntity.ok(bookingService.assignDriverToBooking(id, driverId));
+    }
+
+    @GetMapping("/manager/drivers/available")
+    public ResponseEntity<List<com.neurofleetx.model.User>> getAvailableDrivers() {
+        return ResponseEntity.ok(bookingService.getAvailableDrivers());
+    }
+
+    // Driver endpoints
+    @GetMapping("/driver/bookings")
+    public ResponseEntity<List<Booking>> getDriverBookings(@RequestParam String username) {
+        return ResponseEntity.ok(bookingService.getDriverAssignedBookings(username));
+    }
+
+    @PutMapping("/driver/bookings/{id}/start-trip")
+    public ResponseEntity<Booking> startTrip(@PathVariable Long id) {
+        return ResponseEntity.ok(bookingService.startTripByDriver(id));
+    }
 }
